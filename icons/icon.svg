@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5b942"/>
+      <stop offset="55%" stop-color="#f06650"/>
+      <stop offset="100%" stop-color="#993556"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1f6b6f"/>
+      <stop offset="100%" stop-color="#0e3a3f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded square background (iOS auto-rounds anyway, but looks better in Android/web) -->
+  <rect width="512" height="512" rx="112" fill="url(#sky)"/>
+
+  <!-- sun -->
+  <circle cx="256" cy="220" r="92" fill="#fdfaf3" opacity="0.95"/>
+
+  <!-- water silhouette - layered waves -->
+  <path d="M 0 340 Q 64 320 128 335 T 256 340 T 384 335 T 512 340 L 512 512 L 0 512 Z" fill="url(#sea)"/>
+  <path d="M 0 380 Q 80 365 160 378 T 320 380 T 512 378 L 512 512 L 0 512 Z" fill="#0e3a3f" opacity="0.7"/>
+
+  <!-- palm tree silhouette, off-center for visual interest -->
+  <g transform="translate(380, 200)">
+    <!-- trunk -->
+    <path d="M 0 0 Q 4 60 8 140 L 14 140 Q 18 60 16 0 Z" fill="#1a1410"/>
+    <!-- fronds -->
+    <path d="M 8 0 Q -40 -30 -70 -10 Q -20 -10 8 5 Z" fill="#1a1410"/>
+    <path d="M 8 0 Q 50 -35 80 -15 Q 30 -10 8 5 Z" fill="#1a1410"/>
+    <path d="M 8 0 Q -10 -50 10 -85 Q 10 -40 12 5 Z" fill="#1a1410"/>
+    <path d="M 8 0 Q 30 -45 60 -55 Q 28 -25 12 5 Z" fill="#1a1410"/>
+    <path d="M 8 0 Q -25 -45 -55 -55 Q -22 -25 6 5 Z" fill="#1a1410"/>
+    <!-- coconut clusters -->
+    <circle cx="6" cy="-2" r="3" fill="#1a1410"/>
+    <circle cx="11" cy="0" r="3" fill="#1a1410"/>
+  </g>
+</svg>
