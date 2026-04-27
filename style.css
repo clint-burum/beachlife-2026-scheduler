@@ -611,6 +611,80 @@ h2 {
 }
 .footer a:hover { color: var(--tide-deep); }
 
+/* Poster reference (collapsible) ----------------------------*/
+.poster-ref {
+  margin-top: 1.6rem;
+  padding-top: 1.2rem;
+  border-top: 2px dashed rgba(26, 20, 16, 0.12);
+}
+
+.poster-ref summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  list-style: none;
+  cursor: pointer;
+  padding: 0.7rem 0.9rem;
+  background: var(--sand);
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--ink);
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  min-height: 44px;
+}
+.poster-ref summary::-webkit-details-marker { display: none; }
+.poster-ref summary::marker { content: ''; }
+
+.poster-ref summary:hover { background: var(--sand-deep); }
+
+.poster-ref-label::before {
+  content: '🌴';
+  margin-right: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.poster-ref-chevron {
+  font-size: 1rem;
+  color: var(--ink-soft);
+  transition: transform 0.2s ease;
+  line-height: 1;
+}
+.poster-ref[open] summary { background: var(--tide-deep); color: var(--paper); border-radius: var(--r-md) var(--r-md) 0 0; }
+.poster-ref[open] .poster-ref-chevron { transform: rotate(180deg); color: var(--coral-soft); }
+
+.poster-ref-body {
+  padding: 1rem 0.6rem 0.4rem;
+  background: var(--sand);
+  border-radius: 0 0 var(--r-md) var(--r-md);
+  margin-top: -1px;
+}
+
+.poster-ref-body img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-soft);
+}
+
+.poster-ref-source {
+  margin: 0.7rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+.poster-ref-source a {
+  color: var(--tide-mid);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.poster-ref-source a:hover { color: var(--tide-deep); }
+
 /* Responsive tweaks ----------------------------------------- */
 @media (max-width: 480px) {
   .masthead { padding-left: 1rem; padding-right: 1rem; }

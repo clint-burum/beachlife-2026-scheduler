@@ -185,6 +185,29 @@
       group.appendChild(list);
       container.appendChild(group);
     }
+
+    // Official set times poster reference
+    const ref = document.createElement('details');
+    ref.className = 'poster-ref';
+    const dayName = activeDay === 'fri' ? 'Friday' : activeDay === 'sat' ? 'Saturday' : 'Sunday';
+    ref.innerHTML = `
+      <summary>
+        <span class="poster-ref-label">Official poster — ${dayName}</span>
+        <span class="poster-ref-chevron" aria-hidden="true">⌄</span>
+      </summary>
+      <div class="poster-ref-body">
+        <img
+          src="assets/setlist-${activeDay}.jpg"
+          alt="Official BeachLife 2026 ${dayName} set times poster"
+          loading="lazy"
+          decoding="async"
+        />
+        <p class="poster-ref-source">
+          Source: <a href="https://www.beachlifefestival.com/set-times" target="_blank" rel="noopener">beachlifefestival.com/set-times</a>
+        </p>
+      </div>
+    `;
+    container.appendChild(ref);
   }
 
   function renderSchedule() {
