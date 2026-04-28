@@ -23,9 +23,27 @@
   // artistKey = `${day}::${stage}::${artist}`
   const selected = new Map();
 
+  // Inline SVG glyphs for music service links. 14x14 viewBox, currentColor fill
+  // so they pick up parent text color (works in selected/headliner/normal states).
+  // Apple Music: stylized "music" mark. Spotify: three concentric arcs.
+  const ICON_APPLE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M22.5 7.2c0-1.4-.1-2.6-.4-3.5-.5-1.6-1.7-2.7-3.3-3.1-.9-.2-1.8-.3-2.7-.3-1.7-.1-3.4-.1-5.1-.1-1.7 0-3.4 0-5.1.1-.9 0-1.8.1-2.7.3-1.6.4-2.8 1.5-3.3 3.1-.3.9-.4 2.1-.4 3.5v9.6c0 1.4.1 2.6.4 3.5.5 1.6 1.7 2.7 3.3 3.1.9.2 1.8.3 2.7.3 1.7.1 3.4.1 5.1.1 1.7 0 3.4 0 5.1-.1.9 0 1.8-.1 2.7-.3 1.6-.4 2.8-1.5 3.3-3.1.3-.9.4-2.1.4-3.5V7.2zm-5.7 1.5v7.4c0 1.5-1.2 2.7-2.7 2.7-1.4 0-2.6-1.1-2.7-2.5 0-1.5 1.2-2.7 2.7-2.7.4 0 .8.1 1.1.2V8.7L9.2 10v8.5c0 1.5-1.2 2.7-2.7 2.7-1.4 0-2.6-1.1-2.7-2.5 0-1.5 1.2-2.7 2.7-2.7.4 0 .8.1 1.1.2V7.5c0-.4.3-.7.6-.8l8-1.7c.5-.1.9.3.9.7v3z"/></svg>';
+  const ICON_SPOTIFY = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.7 0 12 0zm5.5 17.3c-.2.4-.7.5-1 .3-2.8-1.7-6.4-2.1-10.6-1.1-.4.1-.8-.2-.9-.6-.1-.4.2-.8.6-.9 4.6-1 8.6-.6 11.7 1.3.3.2.4.7.2 1zm1.5-3.3c-.3.4-.8.6-1.3.3-3.2-2-8.1-2.6-11.9-1.4-.5.1-1-.1-1.2-.6-.1-.5.1-1 .6-1.2 4.4-1.3 9.8-.7 13.5 1.6.5.3.6.9.3 1.3zm.1-3.4C15.2 8.4 8.7 8.2 5 9.3c-.6.2-1.2-.2-1.4-.7-.2-.6.2-1.2.7-1.4 4.3-1.3 11.5-1 16 1.6.5.3.7 1 .4 1.5-.3.5-1 .7-1.6.4z"/></svg>';
+
   // ---- Utilities ---------------------------------------------
   const $  = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+  // Strip parenthetical context and generic backing-band suffixes so music
+  // service search lands on the right artist:
+  //   "Mike Watt (Minutemen, The Stooges)"  -> "Mike Watt"
+  //   "James Taylor and His All-Star Band"  -> "James Taylor"
+  //   "Joan Jett and the Blackhearts"       -> kept as-is (the band IS the act)
+  //   "Jen Pop (The Bombpops)"              -> "Jen Pop"
+  function cleanArtistForSearch(name) {
+    let out = name.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+    out = out.replace(/\s+and\s+His\s+All-Star\s+Band$/i, '');
+    return out.replace(/\s+/g, ' ').trim();
+  }
 
   function timeToMinutes(t) {
     const [h, m] = t.split(':').map(Number);
@@ -160,25 +178,58 @@
         const isSelected = selected.has(k);
         const isHeadliner = !!set.headliner;
         const wouldConflict = isSelected && conflicts.has(k);
+        const searchQuery = cleanArtistForSearch(set.artist);
+        const searchEnc = encodeURIComponent(searchQuery);
+        const artistEsc = escapeHTML(set.artist);
 
-        const card = document.createElement('button');
-        card.type = 'button';
+        // Use a <div role="button"> rather than <button> so we can legally
+        // nest <a> tags inside (HTML disallows interactive descendants of
+        // <button>; iOS Safari refuses to handle those nested taps reliably).
+        const card = document.createElement('div');
         card.className = [
           'artist-card',
           isSelected ? 'is-selected' : '',
           isHeadliner ? 'is-headliner' : '',
           wouldConflict ? 'is-conflict-warn' : ''
         ].filter(Boolean).join(' ');
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
         card.setAttribute('aria-pressed', isSelected);
         card.dataset.key = k;
 
         card.innerHTML = `
           <span class="artist-time">${formatTimeRange(set.start, set.end)}</span>
-          <span class="artist-name">${escapeHTML(set.artist)}${isHeadliner ? '<span class="headliner-tag">Headliner</span>' : ''}</span>
+          <span class="artist-name">${artistEsc}${isHeadliner ? '<span class="headliner-tag">Headliner</span>' : ''}</span>
+          <span class="artist-links" aria-label="Preview ${artistEsc}">
+            <a class="music-link music-link-apple"
+               href="https://music.apple.com/us/search?term=${searchEnc}"
+               target="_blank" rel="noopener"
+               aria-label="Preview ${artistEsc} on Apple Music"
+               title="Apple Music">${ICON_APPLE}</a>
+            <a class="music-link music-link-spotify"
+               href="https://open.spotify.com/search/${searchEnc}"
+               target="_blank" rel="noopener"
+               aria-label="Preview ${artistEsc} on Spotify"
+               title="Spotify">${ICON_SPOTIFY}</a>
+          </span>
           <span class="artist-check" aria-hidden="true">✓</span>
         `;
 
-        card.addEventListener('click', () => toggleSelection(set));
+        // Card click toggles selection — but ignore clicks that landed
+        // on a music link (or its inner SVG/path). closest() walks up
+        // from the actual click target.
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.music-link')) return;
+          toggleSelection(set);
+        });
+        // Keyboard: Enter/Space toggles, but only when focus is on the card itself.
+        card.addEventListener('keydown', (e) => {
+          if (e.target !== card) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleSelection(set);
+          }
+        });
         list.appendChild(card);
       }
 

@@ -410,6 +410,69 @@ h2 {
   flex-shrink: 0;
 }
 
+/* Music service preview links inside artist cards ----------- */
+.artist-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 0.4rem;
+}
+
+.music-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: rgba(26, 20, 16, 0.06);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  /* Larger hit area for thumbs without enlarging the visual */
+  position: relative;
+}
+.music-link::before {
+  /* Invisible 44x44 tap target overlay so fat-finger touches still hit */
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: inherit;
+}
+.music-link:hover {
+  background: var(--coral);
+  color: var(--paper);
+  transform: scale(1.06);
+}
+.music-link:active { transform: scale(0.94); }
+.music-link svg { display: block; }
+
+/* Selected (dark teal) cards: lighten the link affordance */
+.artist-card.is-selected .music-link {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--coral-soft);
+}
+.artist-card.is-selected .music-link:hover {
+  background: var(--coral);
+  color: var(--paper);
+}
+
+/* Headliner (gradient) cards: dark glyph against the warm background */
+.artist-card.is-headliner .music-link {
+  background: rgba(26, 20, 16, 0.18);
+  color: var(--ink);
+}
+.artist-card.is-headliner .music-link:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.artist-card.is-headliner.is-selected .music-link {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--coral-soft);
+}
+
 .headliner-tag {
   display: inline-block;
   background: rgba(0, 0, 0, 0.15);
