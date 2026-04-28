@@ -45,6 +45,91 @@
     return out.replace(/\s+/g, ' ').trim();
   }
 
+  // ---- Apple Music resolver ----------------------------------
+  // The iOS Apple Music app's universal-link handler drops query params on
+  // search URLs (https://music.apple.com/us/search?term=...) — opens the app
+  // but doesn't run the search. The artist-page URL pattern
+  // (https://music.apple.com/us/artist/{slug}/{id}) IS honored correctly.
+  //
+  // We use the public iTunes Search API to resolve artist names to those IDs
+  // on first tap, then cache the result in localStorage so subsequent taps
+  // are instant. If the API fails or returns nothing, we fall back to the
+  // raw search URL (no regression vs current behavior).
+
+  const APPLE_CACHE_KEY = 'beachlife.appleMusicCache.v1';
+  const APPLE_RESOLVE_TIMEOUT_MS = 1500;
+
+  function getAppleCache() {
+    try {
+      return JSON.parse(localStorage.getItem(APPLE_CACHE_KEY) || '{}');
+    } catch (_) {
+      return {};
+    }
+  }
+  function setAppleCacheEntry(query, url) {
+    try {
+      const cache = getAppleCache();
+      cache[query] = url;
+      localStorage.setItem(APPLE_CACHE_KEY, JSON.stringify(cache));
+    } catch (_) {
+      // localStorage may be unavailable (private mode, quota); silently skip
+    }
+  }
+
+  // Returns a Promise<string> resolving to the best Apple Music URL we can find.
+  // Never rejects — falls back to the search URL on any error.
+  function resolveAppleMusic(query) {
+    const fallback = `https://music.apple.com/us/search?term=${encodeURIComponent(query)}`;
+    const cache = getAppleCache();
+    if (cache[query]) return Promise.resolve(cache[query]);
+
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), APPLE_RESOLVE_TIMEOUT_MS);
+    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=musicArtist&limit=1`;
+
+    return fetch(url, { signal: ctrl.signal })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        clearTimeout(timer);
+        const hit = data && data.results && data.results[0] && data.results[0].artistLinkUrl;
+        if (hit) {
+          setAppleCacheEntry(query, hit);
+          return hit;
+        }
+        return fallback;
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        return fallback;
+      });
+  }
+
+  // Handle an Apple Music link click: open a placeholder window immediately
+  // (preserves user-gesture popup permission), then redirect once we have
+  // the resolved URL. If resolution returns the fallback search URL — fine,
+  // user just gets the current behavior.
+  function handleAppleMusicClick(e, query) {
+    e.preventDefault();
+    // about:blank inherits the opener's lifecycle; rel=noopener via setting
+    // .opener = null after the redirect.
+    const w = window.open('about:blank', '_blank');
+    if (!w) {
+      // Popup blocked. Last resort: navigate the current tab.
+      // (This only happens if user has unusually strict blocker.)
+      resolveAppleMusic(query).then((url) => { location.href = url; });
+      return;
+    }
+    resolveAppleMusic(query).then((url) => {
+      try {
+        w.opener = null;
+        w.location.href = url;
+      } catch (_) {
+        // If the placeholder window died, fall back to current-tab nav.
+        location.href = url;
+      }
+    });
+  }
+
   function timeToMinutes(t) {
     const [h, m] = t.split(':').map(Number);
     return h * 60 + m;
@@ -230,6 +315,13 @@
             toggleSelection(set);
           }
         });
+
+        // Apple Music link gets the resolver (search URL is a fallback).
+        // Spotify link works fine with the search URL — no override needed.
+        const appleLink = card.querySelector('.music-link-apple');
+        if (appleLink) {
+          appleLink.addEventListener('click', (e) => handleAppleMusicClick(e, searchQuery));
+        }
         list.appendChild(card);
       }
 
